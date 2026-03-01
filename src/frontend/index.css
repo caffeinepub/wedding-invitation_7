@@ -1,0 +1,214 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Playfair Display - Display Font */
+@font-face {
+  font-family: "Playfair Display";
+  src: url("/assets/fonts/PlayfairDisplay-VariableFont_wght.woff2") format("woff2");
+  font-weight: 400 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Cormorant Garamond";
+  src: url("/assets/fonts/CormorantGaramond-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@layer base {
+  :root {
+    --radius: 0.5rem;
+
+    /* ── Wedding Palette: Ivory / Blush / Gold ── */
+    /* background: warm ivory cream */
+    --background: 0.975 0.012 75;
+    /* foreground: deep charcoal-warm */
+    --foreground: 0.22 0.02 55;
+    /* card: near-white parchment */
+    --card: 0.985 0.008 80;
+    --card-foreground: 0.22 0.02 55;
+    /* popover */
+    --popover: 0.985 0.008 80;
+    --popover-foreground: 0.22 0.02 55;
+    /* primary: deep dusty rose */
+    --primary: 0.52 0.09 10;
+    --primary-foreground: 0.97 0.005 75;
+    /* secondary: soft blush */
+    --secondary: 0.93 0.035 20;
+    --secondary-foreground: 0.38 0.05 15;
+    /* muted: warm gray-rose */
+    --muted: 0.94 0.018 50;
+    --muted-foreground: 0.52 0.04 40;
+    /* accent: warm gold */
+    --accent: 0.78 0.09 78;
+    --accent-foreground: 0.2 0.04 55;
+    /* destructive */
+    --destructive: 0.577 0.245 27.325;
+    --destructive-foreground: 0.985 0 0;
+    /* border: soft rose-tinted */
+    --border: 0.88 0.025 30;
+    --input: 0.88 0.025 30;
+    --ring: 0.65 0.08 10;
+    /* charts */
+    --chart-1: 0.646 0.12 25;
+    --chart-2: 0.6 0.09 50;
+    --chart-3: 0.78 0.09 78;
+    --chart-4: 0.7 0.07 15;
+    --chart-5: 0.82 0.06 85;
+    /* sidebar */
+    --sidebar: 0.975 0.012 75;
+    --sidebar-foreground: 0.22 0.02 55;
+    --sidebar-primary: 0.52 0.09 10;
+    --sidebar-primary-foreground: 0.97 0.005 75;
+    --sidebar-accent: 0.93 0.035 20;
+    --sidebar-accent-foreground: 0.38 0.05 15;
+    --sidebar-border: 0.88 0.025 30;
+    --sidebar-ring: 0.65 0.08 10;
+  }
+
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: "Crimson Pro", "Georgia", serif;
+  }
+}
+
+@layer utilities {
+  /* Scroll snap helpers */
+  .snap-container {
+    scroll-snap-type: y mandatory;
+    overflow-y: scroll;
+    height: 100vh;
+  }
+
+  .snap-section {
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+  }
+
+  /* Custom scrollbar - thin and gold-tinted */
+  .snap-container::-webkit-scrollbar {
+    width: 4px;
+  }
+  .snap-container::-webkit-scrollbar-track {
+    background: oklch(0.93 0.035 20);
+  }
+  .snap-container::-webkit-scrollbar-thumb {
+    background: oklch(0.78 0.09 78);
+    border-radius: 999px;
+  }
+
+  /* Gold shimmer text */
+  .text-gold {
+    color: oklch(0.62 0.1 78);
+  }
+
+  /* Decorative rule */
+  .ornament-line {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  .ornament-line::before,
+  .ornament-line::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(
+      to right,
+      transparent,
+      oklch(0.78 0.09 78 / 0.6),
+      oklch(0.78 0.09 78),
+      oklch(0.78 0.09 78 / 0.6),
+      transparent
+    );
+  }
+
+  /* Font utilities */
+  .font-display {
+    font-family: "Playfair Display", "Georgia", "Times New Roman", serif;
+  }
+
+  .font-body {
+    font-family: "Crimson Pro", "Georgia", "Times New Roman", serif;
+  }
+
+  /* Frosted glass card */
+  .glass-card {
+    background: oklch(0.985 0.008 80 / 0.82);
+    backdrop-filter: blur(16px) saturate(1.4);
+    border: 1px solid oklch(0.88 0.025 30 / 0.6);
+  }
+
+  /* Petal animation */
+  @keyframes floatPetal {
+    0%,
+    100% {
+      transform: translateY(0) rotate(0deg);
+    }
+    33% {
+      transform: translateY(-12px) rotate(2deg);
+    }
+    66% {
+      transform: translateY(-6px) rotate(-1deg);
+    }
+  }
+
+  @keyframes pulseSoft {
+    0%,
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.7;
+      transform: scale(0.97);
+    }
+  }
+
+  @keyframes shimmerGold {
+    0% {
+      background-position: -200% center;
+    }
+    100% {
+      background-position: 200% center;
+    }
+  }
+
+  .animate-float {
+    animation: floatPetal 6s ease-in-out infinite;
+  }
+
+  .animate-pulse-soft {
+    animation: pulseSoft 2.5s ease-in-out infinite;
+  }
+
+  .animate-shimmer {
+    background: linear-gradient(
+      90deg,
+      oklch(0.62 0.1 78) 0%,
+      oklch(0.82 0.12 85) 40%,
+      oklch(0.62 0.1 78) 60%,
+      oklch(0.55 0.09 70) 100%
+    );
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: shimmerGold 4s linear infinite;
+  }
+
+  /* Countdown circle */
+  .countdown-unit {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+  }
+}
