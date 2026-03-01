@@ -3,8 +3,8 @@ import type { RSVP, RSVPStatus, WeddingDetails } from "../backend.d";
 import { useActor } from "./useActor";
 
 const DEFAULT_WEDDING: WeddingDetails = {
-  coupleNames: "James & Emily",
-  weddingDate: "2026-06-15",
+  coupleNames: "Faraz & Ayesha",
+  weddingDate: "2026-04-25",
   venueName: "The Grand Rosewood Estate",
   venueAddress: "123 Garden Lane, Rosewood, CA 90210",
   note: "Join us for an evening of love, laughter, and happily ever after.",

@@ -168,8 +168,8 @@ function HeroSection({
   scrollToDate: () => void;
 }) {
   const names = coupleNames.split("&").map((n) => n.trim());
-  const groom = names[0] ?? "James";
-  const bride = names[1] ?? "Emily";
+  const groom = names[0] ?? "Faraz";
+  const bride = names[1] ?? "Ayesha";
 
   return (
     <section
@@ -211,9 +211,9 @@ function HeroSection({
           className="mb-4 w-full max-w-[480px]"
         >
           <img
-            src="/assets/generated/floral-banner.dim_1200x400.png"
+            src="/assets/uploads/pngtree-luxury-gold-vintage-title-frame-png-transparent-background-png-image_4488806-1.png"
             alt="Floral decoration"
-            className="w-full h-auto opacity-85"
+            className="w-full h-auto opacity-90"
           />
         </motion.div>
 
@@ -832,8 +832,8 @@ export default function App() {
   }, []);
 
   const details = wedding ?? {
-    coupleNames: "James & Emily",
-    weddingDate: "2026-06-15",
+    coupleNames: "Faraz & Ayesha",
+    weddingDate: "2026-04-25",
     venueName: "The Grand Rosewood Estate",
     venueAddress: "123 Garden Lane, Rosewood, CA 90210",
     note: "Join us for an evening of love, laughter, and happily ever after.",
