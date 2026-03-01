@@ -12,6 +12,14 @@
 }
 
 @font-face {
+  font-family: "Crimson Pro";
+  src: url("/assets/fonts/CrimsonPro-VariableFont_wght.woff2") format("woff2");
+  font-weight: 200 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
   font-family: "Cormorant Garamond";
   src: url("/assets/fonts/CormorantGaramond-Regular.woff2") format("woff2");
   font-weight: 400;
@@ -211,4 +219,78 @@
     align-items: center;
     gap: 0.25rem;
   }
+
+  /* ── Floating Petals ─────────────────────────────────────────────────── */
+  @keyframes riseAndDrift {
+    0%   { transform: translateY(0) translateX(0) rotate(0deg); opacity: 0; }
+    10%  { opacity: 0.7; }
+    90%  { opacity: 0.5; }
+    100% { transform: translateY(-110vh) translateX(var(--drift, 40px)) rotate(360deg); opacity: 0; }
+  }
+
+  .animate-rise {
+    animation: riseAndDrift var(--duration, 8s) var(--delay, 0s) ease-in infinite;
+  }
+
+  /* ── Sparkle Burst ───────────────────────────────────────────────────── */
+  @keyframes sparkleOut {
+    0%   { transform: translate(0,0) scale(1); opacity: 1; }
+    100% { transform: translate(var(--sx, 20px), var(--sy, -20px)) scale(0); opacity: 0; }
+  }
+
+  .animate-sparkle {
+    animation: sparkleOut var(--spark-dur, 0.8s) ease-out forwards;
+  }
+
+  /* ── Ring Rotate ─────────────────────────────────────────────────────── */
+  @keyframes ringRotate {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+  }
+
+  .animate-ring {
+    animation: ringRotate 8s linear infinite;
+    display: inline-block;
+  }
+
+  /* ── Date Shimmer Wash ───────────────────────────────────────────────── */
+  @keyframes shimmerWash {
+    0%   { background-position: -200% center; }
+    100% { background-position: 200% center; }
+  }
+
+  .date-shimmer-wash {
+    background: linear-gradient(
+      105deg,
+      oklch(0.93 0.035 20) 0%,
+      oklch(0.975 0.012 75) 30%,
+      oklch(0.96 0.06 78 / 0.5) 50%,
+      oklch(0.975 0.012 75) 70%,
+      oklch(0.93 0.035 20) 100%
+    );
+    background-size: 300% auto;
+    animation: shimmerWash 3.5s ease-in-out;
+  }
+
+  /* ── Scratch card overlay ────────────────────────────────────────────── */
+  .scratch-canvas {
+    cursor: crosshair;
+    touch-action: none;
+    border-radius: 1rem;
+  }
+
+  /* ── Heart burst animation ───────────────────────────────────────────── */
+  @keyframes heartBurst {
+    0%   { transform: translate(var(--hx, 0), var(--hy, 0)) scale(0) rotate(var(--hr, 0deg)); opacity: 1; }
+    60%  { opacity: 1; }
+    100% { transform: translate(var(--hx, 0), var(--hy, 0)) scale(1.4) rotate(var(--hr, 0deg)) translateY(-30px); opacity: 0; }
+  }
+
+  .animate-heart-burst {
+    animation: heartBurst 0.9s ease-out forwards;
+  }
+
+  /* ── Blush bg tint for hero ──────────────────────────────────────────── */
+  .bg-ivory { background-color: oklch(0.975 0.012 75); }
+  .bg-blush-light { background-color: oklch(0.96 0.022 20); }
 }

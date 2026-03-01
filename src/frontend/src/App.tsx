@@ -122,11 +122,386 @@ function FloralCorner({
   );
 }
 
-// ── Ornament Divider ─────────────────────────────────────────────────────────
+// ── Enhanced Ornament Divider ─────────────────────────────────────────────────
 function OrnamentDivider({ symbol = "✦" }: { symbol?: string }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const isInView = useInView(ref, { once: true });
+
   return (
-    <div className="ornament-line w-full max-w-xs my-4">
-      <span className="text-gold text-lg flex-shrink-0">{symbol}</span>
+    <div ref={ref} className="ornament-line w-full max-w-xs my-4">
+      <motion.span
+        className="text-gold text-lg flex-shrink-0"
+        animate={isInView ? { rotate: 360 } : { rotate: 0 }}
+        initial={{ rotate: 0, scale: 0.5, opacity: 0 }}
+        transition={
+          isInView
+            ? {
+                rotate: {
+                  duration: 8,
+                  repeat: Number.POSITIVE_INFINITY,
+                  ease: "linear",
+                },
+                scale: { duration: 0.6, type: "spring", stiffness: 200 },
+                opacity: { duration: 0.4 },
+              }
+            : {}
+        }
+        whileInView={{ scale: 1, opacity: 1 }}
+        viewport={{ once: true }}
+        style={{ display: "inline-block" }}
+      >
+        {symbol}
+      </motion.span>
+    </div>
+  );
+}
+
+// ── Sparkle Trail ────────────────────────────────────────────────────────────
+const SPARKLE_SHAPES = ["✦", "✧", "★", "◆", "✸"];
+
+function SparkleTrail({ trigger }: { trigger: boolean }) {
+  const [sparks, setSparks] = useState<
+    {
+      id: number;
+      x: number;
+      y: number;
+      shape: string;
+      size: number;
+      delay: number;
+    }[]
+  >([]);
+
+  useEffect(() => {
+    if (!trigger) return;
+    const newSparks = Array.from({ length: 8 }, (_, i) => ({
+      id: Date.now() + i,
+      x: (Math.random() - 0.5) * 120,
+      y: -(Math.random() * 80 + 20),
+      shape: SPARKLE_SHAPES[i % SPARKLE_SHAPES.length],
+      size: Math.random() * 7 + 6,
+      delay: i * 0.06,
+    }));
+    setSparks(newSparks);
+    const t = setTimeout(() => setSparks([]), 1200);
+    return () => clearTimeout(t);
+  }, [trigger]);
+
+  return (
+    <div className="absolute inset-0 pointer-events-none overflow-visible">
+      <AnimatePresence>
+        {sparks.map((s) => (
+          <motion.span
+            key={s.id}
+            className="absolute left-1/2 top-1/2"
+            style={
+              {
+                fontSize: s.size,
+                color: "oklch(0.72 0.12 78)",
+                "--sx": `${s.x}px`,
+                "--sy": `${s.y}px`,
+              } as React.CSSProperties
+            }
+            initial={{ opacity: 1, x: 0, y: 0, scale: 1 }}
+            animate={{ opacity: 0, x: s.x, y: s.y, scale: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.8, delay: s.delay, ease: "easeOut" }}
+          >
+            {s.shape}
+          </motion.span>
+        ))}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+// ── Floating Petals ───────────────────────────────────────────────────────────
+const PETAL_COLORS = [
+  "oklch(0.93 0.055 10)",
+  "oklch(0.89 0.06 15)",
+  "oklch(0.85 0.05 355)",
+  "oklch(0.91 0.045 25)",
+  "oklch(0.88 0.04 340)",
+  "oklch(0.96 0.03 20)",
+];
+
+const petals = Array.from({ length: 14 }, (_, i) => ({
+  id: i,
+  left: `${Math.random() * 95 + 2}%`,
+  size: Math.random() * 14 + 8,
+  color: PETAL_COLORS[i % PETAL_COLORS.length],
+  duration: `${Math.random() * 7 + 7}s`,
+  delay: `${Math.random() * 6}s`,
+  drift: `${(Math.random() - 0.5) * 80}px`,
+  borderRadius: `${Math.random() * 40 + 30}% ${Math.random() * 40 + 50}% ${Math.random() * 40 + 40}% ${Math.random() * 40 + 50}%`,
+}));
+
+function FloatingPetals() {
+  return (
+    <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
+      {petals.map((p) => (
+        <div
+          key={p.id}
+          className="absolute bottom-0 animate-rise"
+          style={
+            {
+              left: p.left,
+              width: p.size,
+              height: p.size * 1.25,
+              backgroundColor: p.color,
+              borderRadius: p.borderRadius,
+              opacity: 0,
+              "--duration": p.duration,
+              "--delay": p.delay,
+              "--drift": p.drift,
+            } as React.CSSProperties
+          }
+        />
+      ))}
+    </div>
+  );
+}
+
+// ── Scratch Card ─────────────────────────────────────────────────────────────
+function ScratchCard({
+  day,
+  month,
+  year,
+}: {
+  day: number;
+  month: string;
+  year: number;
+}) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [revealed, setRevealed] = useState(false);
+  const [canvasReady, setCanvasReady] = useState(false);
+  const [showHearts, setShowHearts] = useState(false);
+  const isDrawing = useRef(false);
+  const revealedRef = useRef(false);
+
+  const CARD_W = 280;
+  const CARD_H = 160;
+
+  // Paint the gold scratch layer
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    canvas.width = CARD_W;
+    canvas.height = CARD_H;
+
+    // Gold base gradient
+    const grad = ctx.createLinearGradient(0, 0, CARD_W, CARD_H);
+    grad.addColorStop(0, "#c9a84c");
+    grad.addColorStop(0.25, "#e8c96a");
+    grad.addColorStop(0.5, "#f5dc8a");
+    grad.addColorStop(0.75, "#d4a843");
+    grad.addColorStop(1, "#c89a30");
+    ctx.fillStyle = grad;
+    ctx.roundRect(0, 0, CARD_W, CARD_H, 12);
+    ctx.fill();
+
+    // Sparkle dots
+    for (let i = 0; i < 40; i++) {
+      const x = Math.random() * CARD_W;
+      const y = Math.random() * CARD_H;
+      const r = Math.random() * 2 + 0.5;
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(255,255,255,${Math.random() * 0.5 + 0.15})`;
+      ctx.fill();
+    }
+
+    // Label text
+    ctx.fillStyle = "rgba(90, 55, 10, 0.9)";
+    ctx.font = "bold 11px 'Georgia', serif";
+    ctx.textAlign = "center";
+    ctx.letterSpacing = "2px";
+    ctx.fillText("✦  RUB TO REVEAL THE DATE  ✦", CARD_W / 2, CARD_H / 2 - 6);
+    ctx.font = "10px 'Georgia', serif";
+    ctx.fillStyle = "rgba(90,55,10,0.65)";
+    ctx.fillText("Scratch away the gold...", CARD_W / 2, CARD_H / 2 + 14);
+
+    setCanvasReady(true);
+  }, []);
+
+  // Measure revealed area
+  const checkRevealPercent = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return 0;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return 0;
+    const data = ctx.getImageData(0, 0, CARD_W, CARD_H).data;
+    let transparent = 0;
+    const total = CARD_W * CARD_H;
+    for (let i = 3; i < data.length; i += 4) {
+      if (data[i] < 30) transparent++;
+    }
+    return transparent / total;
+  }, []);
+
+  // Scratch erase at point
+  const scratch = useCallback(
+    (x: number, y: number) => {
+      if (revealedRef.current) return;
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+      ctx.globalCompositeOperation = "destination-out";
+      ctx.beginPath();
+      ctx.arc(x, y, 22, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalCompositeOperation = "source-over";
+
+      const pct = checkRevealPercent();
+      if (pct > 0.6 && !revealedRef.current) {
+        revealedRef.current = true;
+        // Fade out canvas
+        canvas.style.transition = "opacity 0.8s ease";
+        canvas.style.opacity = "0";
+        setTimeout(() => {
+          setRevealed(true);
+          setShowHearts(true);
+        }, 800);
+      }
+    },
+    [checkRevealPercent],
+  );
+
+  const getPos = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    const rect = canvasRef.current!.getBoundingClientRect();
+    const scaleX = CARD_W / rect.width;
+    const scaleY = CARD_H / rect.height;
+    return {
+      x: (e.clientX - rect.left) * scaleX,
+      y: (e.clientY - rect.top) * scaleY,
+    };
+  };
+
+  const getTouchPos = (e: React.TouchEvent<HTMLCanvasElement>) => {
+    const rect = canvasRef.current!.getBoundingClientRect();
+    const touch = e.touches[0];
+    const scaleX = CARD_W / rect.width;
+    const scaleY = CARD_H / rect.height;
+    return {
+      x: (touch.clientX - rect.left) * scaleX,
+      y: (touch.clientY - rect.top) * scaleY,
+    };
+  };
+
+  const hearts = Array.from({ length: 10 }, (_, i) => ({
+    id: i,
+    hx: `${(Math.random() - 0.5) * 160}px`,
+    hy: `${-(Math.random() * 80 + 20)}px`,
+    hr: `${(Math.random() - 0.5) * 45}deg`,
+    delay: `${i * 0.07}s`,
+    size: Math.random() * 10 + 10,
+  }));
+
+  return (
+    <div
+      className="relative flex flex-col items-center"
+      style={{ minWidth: CARD_W }}
+    >
+      {/* Date beneath the scratch card */}
+      <div className="flex items-baseline gap-4 md:gap-6 mb-0 select-none">
+        <span className="font-display text-7xl md:text-9xl font-bold text-gold leading-none">
+          {day}
+        </span>
+        <div className="flex flex-col items-start gap-1">
+          <span
+            className="font-display text-2xl md:text-3xl font-semibold"
+            style={{ color: "oklch(0.35 0.04 25)" }}
+          >
+            {month}
+          </span>
+          <span
+            className="font-display text-2xl md:text-3xl font-semibold"
+            style={{ color: "oklch(0.35 0.04 25)" }}
+          >
+            {year}
+          </span>
+        </div>
+      </div>
+
+      {/* Canvas scratch overlay — only shown before full reveal */}
+      {!revealed && canvasReady && (
+        <canvas
+          ref={canvasRef}
+          className="scratch-canvas absolute inset-0 w-full h-full"
+          style={{
+            width: "100%",
+            height: "100%",
+            zIndex: 10,
+            borderRadius: "12px",
+          }}
+          onMouseDown={(e) => {
+            isDrawing.current = true;
+            scratch(...(Object.values(getPos(e)) as [number, number]));
+          }}
+          onMouseMove={(e) => {
+            if (isDrawing.current)
+              scratch(...(Object.values(getPos(e)) as [number, number]));
+          }}
+          onMouseUp={() => {
+            isDrawing.current = false;
+          }}
+          onMouseLeave={() => {
+            isDrawing.current = false;
+          }}
+          onTouchStart={(e) => {
+            e.preventDefault();
+            isDrawing.current = true;
+            scratch(...(Object.values(getTouchPos(e)) as [number, number]));
+          }}
+          onTouchMove={(e) => {
+            e.preventDefault();
+            if (isDrawing.current)
+              scratch(...(Object.values(getTouchPos(e)) as [number, number]));
+          }}
+          onTouchEnd={() => {
+            isDrawing.current = false;
+          }}
+        />
+      )}
+      {/* Hidden canvas for measurements after reveal */}
+      {!revealed && !canvasReady && (
+        <canvas ref={canvasRef} style={{ display: "none" }} />
+      )}
+
+      {/* Heart burst after reveal */}
+      <AnimatePresence>
+        {showHearts && (
+          <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+            {hearts.map((h) => (
+              <motion.span
+                key={h.id}
+                className="absolute animate-heart-burst"
+                style={
+                  {
+                    fontSize: h.size,
+                    color: "oklch(0.62 0.1 78)",
+                    "--hx": h.hx,
+                    "--hy": h.hy,
+                    "--hr": h.hr,
+                    animationDelay: h.delay,
+                  } as React.CSSProperties
+                }
+                initial={{ opacity: 1 }}
+                animate={{ opacity: 0 }}
+                transition={{
+                  duration: 1.2,
+                  delay: Number.parseFloat(h.delay) + 0.8,
+                }}
+              >
+                ♥
+              </motion.span>
+            ))}
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -195,6 +570,9 @@ function HeroSection({
         }}
       />
 
+      {/* Floating petals in hero */}
+      <FloatingPetals />
+
       {/* Floral corners */}
       <FloralCorner position="tl" size={180} delay={0.3} />
       <FloralCorner position="tr" size={180} delay={0.5} />
@@ -227,11 +605,11 @@ function HeroSection({
           The Wedding of
         </motion.p>
 
-        {/* Names */}
+        {/* Names — with letter-spacing bloom on entrance */}
         <div className="flex items-center gap-4 md:gap-8 flex-wrap justify-center mb-6">
           <motion.h1
-            initial={{ opacity: 0, x: -60 }}
-            animate={{ opacity: 1, x: 0 }}
+            initial={{ opacity: 0, x: -60, letterSpacing: "0em" }}
+            animate={{ opacity: 1, x: 0, letterSpacing: "0.02em" }}
             transition={{
               duration: 0.9,
               delay: 0.7,
@@ -258,8 +636,8 @@ function HeroSection({
           </motion.span>
 
           <motion.h1
-            initial={{ opacity: 0, x: 60 }}
-            animate={{ opacity: 1, x: 0 }}
+            initial={{ opacity: 0, x: 60, letterSpacing: "0em" }}
+            animate={{ opacity: 1, x: 0, letterSpacing: "0.02em" }}
             transition={{
               duration: 0.9,
               delay: 0.7,
@@ -330,16 +708,40 @@ function HeroSection({
 function DateSection({ weddingDate }: { weddingDate: string }) {
   const countdown = useCountdown(weddingDate);
   const formatted = formatDate(weddingDate);
+  const ref = useRef<HTMLDivElement>(null);
+  const isInView = useInView(ref, { once: true, margin: "-10% 0px" });
+  const [sparkTrigger, setSparkTrigger] = useState(false);
+
+  useEffect(() => {
+    if (isInView) {
+      const t = setTimeout(() => setSparkTrigger(true), 600);
+      return () => clearTimeout(t);
+    }
+  }, [isInView]);
+
+  useEffect(() => {
+    if (sparkTrigger) {
+      const t = setTimeout(() => setSparkTrigger(false), 1500);
+      return () => clearTimeout(t);
+    }
+  }, [sparkTrigger]);
 
   return (
     <RevealSection
       id="date"
-      className="bg-gradient-to-b from-ivory to-blush-light"
+      className={
+        isInView
+          ? "date-shimmer-wash"
+          : "bg-gradient-to-b from-ivory to-blush-light"
+      }
     >
       <FloralCorner position="tr" size={150} delay={0.2} />
       <FloralCorner position="bl" size={130} delay={0.4} />
 
-      <div className="relative z-10 flex flex-col items-center text-center px-6 py-16 max-w-2xl mx-auto w-full">
+      <div
+        ref={ref}
+        className="relative z-10 flex flex-col items-center text-center px-6 py-16 max-w-2xl mx-auto w-full"
+      >
         <motion.p
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
@@ -361,7 +763,7 @@ function DateSection({ weddingDate }: { weddingDate: string }) {
           {formatted.dayOfWeek}
         </motion.p>
 
-        {/* Big date display */}
+        {/* Scratch card wrapping the date */}
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           whileInView={{ opacity: 1, scale: 1 }}
@@ -371,25 +773,15 @@ function DateSection({ weddingDate }: { weddingDate: string }) {
             delay: 0.2,
             ease: [0.25, 0.46, 0.45, 0.94],
           }}
-          className="flex items-baseline gap-4 md:gap-6 mb-2"
+          className="relative mb-2"
+          style={{ minHeight: 120 }}
         >
-          <span className="font-display text-7xl md:text-9xl font-bold text-gold leading-none">
-            {formatted.day}
-          </span>
-          <div className="flex flex-col items-start gap-1">
-            <span
-              className="font-display text-2xl md:text-3xl font-semibold"
-              style={{ color: "oklch(0.35 0.04 25)" }}
-            >
-              {formatted.month}
-            </span>
-            <span
-              className="font-display text-2xl md:text-3xl font-semibold"
-              style={{ color: "oklch(0.35 0.04 25)" }}
-            >
-              {formatted.year}
-            </span>
-          </div>
+          <SparkleTrail trigger={sparkTrigger} />
+          <ScratchCard
+            day={formatted.day}
+            month={formatted.month}
+            year={formatted.year}
+          />
         </motion.div>
 
         <OrnamentDivider symbol="✦" />
@@ -460,11 +852,17 @@ function LocationSection({
           Venue
         </motion.p>
 
+        {/* 3D tilt slide-in card */}
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0, y: 50, rotateX: 8 }}
+          whileInView={{ opacity: 1, y: 0, rotateX: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.8, delay: 0.1 }}
+          transition={{
+            duration: 0.9,
+            delay: 0.1,
+            ease: [0.25, 0.46, 0.45, 0.94],
+          }}
+          style={{ transformPerspective: 800 }}
           className="glass-card rounded-2xl p-8 md:p-12 shadow-petal w-full"
         >
           {/* Map pin icon */}
@@ -555,6 +953,14 @@ function RSVPSection() {
     );
   };
 
+  const formFields = [
+    { key: "name", delay: 0.15 },
+    { key: "email", delay: 0.25 },
+    { key: "attendance", delay: 0.35 },
+    { key: "message", delay: 0.45 },
+    { key: "submit", delay: 0.55 },
+  ];
+
   return (
     <RevealSection id="rsvp" className="bg-blush-light">
       <FloralCorner position="tr" size={140} delay={0.2} />
@@ -631,8 +1037,14 @@ function RSVPSection() {
               onSubmit={handleSubmit}
               className="glass-card rounded-2xl p-8 shadow-petal w-full mt-4 text-left"
             >
-              {/* Guest Name */}
-              <div className="mb-5">
+              {/* Guest Name — staggered */}
+              <motion.div
+                className="mb-5"
+                initial={{ opacity: 0, x: -20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: formFields[0].delay }}
+              >
                 <Label
                   htmlFor="rsvp-name"
                   className="font-body text-sm uppercase tracking-widest text-muted-foreground mb-2 block"
@@ -648,10 +1060,16 @@ function RSVPSection() {
                   required
                   className="font-body text-base bg-ivory/80 border-border focus:border-gold focus-visible:ring-gold/30"
                 />
-              </div>
+              </motion.div>
 
-              {/* Email */}
-              <div className="mb-5">
+              {/* Email — staggered */}
+              <motion.div
+                className="mb-5"
+                initial={{ opacity: 0, x: -20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: formFields[1].delay }}
+              >
                 <Label
                   htmlFor="rsvp-email"
                   className="font-body text-sm uppercase tracking-widest text-muted-foreground mb-2 block"
@@ -667,10 +1085,16 @@ function RSVPSection() {
                   required
                   className="font-body text-base bg-ivory/80 border-border focus:border-gold focus-visible:ring-gold/30"
                 />
-              </div>
+              </motion.div>
 
-              {/* Attendance */}
-              <div className="mb-5">
+              {/* Attendance — staggered */}
+              <motion.div
+                className="mb-5"
+                initial={{ opacity: 0, x: -20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: formFields[2].delay }}
+              >
                 <Label className="font-body text-sm uppercase tracking-widest text-muted-foreground mb-3 block">
                   Attendance
                 </Label>
@@ -705,10 +1129,16 @@ function RSVPSection() {
                     </div>
                   ))}
                 </RadioGroup>
-              </div>
+              </motion.div>
 
-              {/* Message */}
-              <div className="mb-7">
+              {/* Message — staggered */}
+              <motion.div
+                className="mb-7"
+                initial={{ opacity: 0, x: -20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: formFields[3].delay }}
+              >
                 <Label
                   htmlFor="rsvp-message"
                   className="font-body text-sm uppercase tracking-widest text-muted-foreground mb-2 block"
@@ -726,32 +1156,39 @@ function RSVPSection() {
                   rows={3}
                   className="font-body text-base bg-ivory/80 border-border focus:border-gold focus-visible:ring-gold/30 resize-none"
                 />
-              </div>
+              </motion.div>
 
-              {/* Submit */}
-              <Button
-                type="submit"
-                disabled={isPending}
-                className="w-full font-body text-sm uppercase tracking-widest py-6 rounded-full transition-all duration-300"
-                style={{
-                  background: isPending
-                    ? "oklch(0.72 0.06 20)"
-                    : "oklch(0.52 0.09 10)",
-                  color: "oklch(0.975 0.012 75)",
-                }}
+              {/* Submit — staggered */}
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: formFields[4].delay }}
               >
-                {isPending ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Sending your reply…
-                  </>
-                ) : (
-                  <>
-                    <Send className="mr-2 h-4 w-4" />
-                    Send RSVP
-                  </>
-                )}
-              </Button>
+                <Button
+                  type="submit"
+                  disabled={isPending}
+                  className="w-full font-body text-sm uppercase tracking-widest py-6 rounded-full transition-all duration-300"
+                  style={{
+                    background: isPending
+                      ? "oklch(0.72 0.06 20)"
+                      : "oklch(0.52 0.09 10)",
+                    color: "oklch(0.975 0.012 75)",
+                  }}
+                >
+                  {isPending ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Sending your reply…
+                    </>
+                  ) : (
+                    <>
+                      <Send className="mr-2 h-4 w-4" />
+                      Send RSVP
+                    </>
+                  )}
+                </Button>
+              </motion.div>
             </motion.form>
           )}
         </AnimatePresence>
